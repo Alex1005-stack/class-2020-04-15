@@ -78,11 +78,11 @@ Second, if we give expose them to the treatment, what will their `att_end` be? H
 ```{r}
 model_3 <- stan_glm(att_end ~ att_start + treatment + male + male:treatment, data = train, refresh = 0)
 model_3
-newdf <- tibble(treatment = "Treated", male = c(1, 0), att_start = 9)
-res_mean <- posterior_linpred(model_3, newdata = newdf)
-quantile(res_mean[, 1], probs = c(0.025, 0.5, 0.975))
-quantile(res_mean[, 2], probs = c(0.025, 0.5, 0.975))
-res_forecast <- posterior_predict(model_3, newdata = newdf)
+newdf <- tibble(treatment = "Treated", male = c(1, 0), att_start = 9) # Creating tibble with new data (2 individuals, both treated, one male, one female, both start attitude of 9)
+res_mean <- posterior_linpred(model_3, newdata = newdf) # simulating 4000 times, what would it mean for 
+quantile(res_mean[, 1], probs = c(0.025, 0.5, 0.975)) # determining quantiles for the 4000 rows
+quantile(res_mean[, 2], probs = c(0.025, 0.5, 0.975)) # determining quantiles for the 4000 rows
+res_forecast <- posterior_predict(model_3, newdata = newdf) # same as linpred, but does not take into account the standard error of the coefficients
 quantile(res_forecast[, 1], probs = c(0.025, 0.5, 0.975))
 quantile(res_forecast[, 2], probs = c(0.025, 0.5, 0.975))
 ```
