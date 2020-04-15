@@ -15,11 +15,12 @@ library(tidyverse)
 # Install the latest version with: remotes::install_github("davidkane9/gov.1005.data")
 # Provides access to train data
 
+remotes::install_github("davidkane9/gov.1005.data")
+
 library(gov.1005.data)
 
 # Don't like the factor ordering in the current data. So, switch to character,
 # which, because of the default alphabetical ordering, gets me what I want.
-
 train <- train %>% 
   mutate(treatment = as.character(treatment))
 ```
@@ -38,8 +39,13 @@ Recall "Causal effect of intergroup contact on exclusionary attitudes" by Ryan E
 
 * Why is sigma 2.8?
 
-Also, provide a sentence about the 90% confidence interval for the treatment effect with a Bayesian interpreptation.
+Also, provide a sentence about the 90% confidence interval for the treatment effect with a Bayesian interpretation.
 
+
+```{r}
+model_1 <- stan_glm(att_end ~ treatment, data = train, refresh = 0)
+model_1
+```
 
 # Scene 2
 
@@ -54,6 +60,11 @@ Also, provide a sentence about the 90% confidence interval for the treatment eff
 
 * Which model is the truth?
 
+```{r}
+model_2 <- stan_glm(att_end ~ att_start + treatment, data = train, refresh = 0)
+model_2
+```
+
 # Scene 3
 
 **Prompt:** Let's consider interactions. Create a new model, `model_3`, which is just like `model_1` but which includes `att_start`, `male`, `treatment` and the interaction between `male` and `treatment` as regressors. Interpret the associated coefficients. Is the treatment effect different for men?
@@ -63,6 +74,18 @@ Imagine we one man and one women, both with `att_start = 9`. We are interested i
 First, what is the unobservable predictor for the true att_end for each person if given treatment. Hint: `posterior_linpred()`. What is the 95% confidence interval?
 
 Second, if we give expose them to the treatment, what will their `att_end` be? Hint: `posterior_predict()`. What is a 95% confidence interval for this forecast?
+
+```{r}
+model_3 <- stan_glm(att_end ~ att_start + treatment + male + male:treatment, data = train, refresh = 0)
+model_3
+newdf <- tibble(treatment = "Treated", male = c(1, 0), att_start = 9)
+res_mean <- posterior_linpred(model_3, newdata = newdf)
+quantile(res_mean[, 1], probs = c(0.025, 0.5, 0.975))
+quantile(res_mean[, 2], probs = c(0.025, 0.5, 0.975))
+res_forecast <- posterior_predict(model_3, newdata = newdf)
+quantile(res_forecast[, 1], probs = c(0.025, 0.5, 0.975))
+quantile(res_forecast[, 2], probs = c(0.025, 0.5, 0.975))
+```
 
 
 # Scene 4
