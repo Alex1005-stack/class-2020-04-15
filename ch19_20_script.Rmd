@@ -86,6 +86,51 @@ res_forecast <- posterior_predict(model_3, newdata = newdf) # same as linpred, b
 quantile(res_forecast[, 1], probs = c(0.025, 0.5, 0.975))
 quantile(res_forecast[, 2], probs = c(0.025, 0.5, 0.975))
 ```
+# Scene 4
+
+**Prompt:** Enos does not estimate this model. Instead, he uses a model with `att_chg` as the outcome variable. Use  `stan_glm()` to estimate and interpret a model, called `model_4`, in which `att_chg` is the dependent variable and `treatment` is the explanatory variable.
+
+How does the estimated treatment effect differ between `model_1` and `model_4`? What causes that difference? Which one is correct?
+
+```{r}
+model_4 <- stan_glm(att_chg ~ treatment, data = train, refresh = 0)
+model_4
+```
+
+```{r}
+model_1
+```
+
+
+
+
+
+# Scene 5
+
+
+**Prompt:** Create a tibble, called `scene_5`, which creates the same model as in Scene 1, but for four sub-groups separately: combinations of male/female and Republican/Non-Republican. Before running the regression, what do you predict you will find? Will the treatment effect vary across these groupings? Why?
+
+Hints: You want to create a new variable which defines your four blocks, then `nest` with that variable. The *Primer* provides some useful examples.
+
+After running the analysis, interpret the intercept and coefficient estimates across the models. Do they match your predictions? Is there evidence of varying treatment effects?
+
+It seems that the treatment only has an effect on two of the four sub-groups. Tell me a story about why that might be the case.
+
+```{r}
+scene_5 <- train %>% 
+  mutate(blocks = case_when(male & republican      ~ "male Republicans",
+                            male & ! republican    ~ "male Democrats",
+                            ! male & republican    ~ "female Republicans",
+                            ! male & ! republican  ~ "female Democrats")) %>% 
+  group_by(blocks) %>% 
+  nest() %>% 
+  mutate(mods = map(data, ~ stan_glm(att_end ~ treatment, data = ., refresh = 0))) %>% 
+  mutate(coefs = map(mods, ~ tidy(.))) %>%
+  unnest(coefs) 
+  
+scene_5 %>% 
+  arrange(term, blocks)
+```
 
 
 # Scene 4
